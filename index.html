@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>KEX POS - Final Compact Version</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial;
+    background: #dcdcdc;
+}
+
+/* ===== Top Bar ===== */
+.topbar {
+    height: 34px;
+    background: #efefef;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    font-size: 12px;
+    border-bottom: 1px solid #c8c8c8;
+}
+
+.status-left {
+    color: #333;
+}
+
+/* ===== Compact Remittance ===== */
+.remittance {
+    padding: 3px 10px;
+    font-size: 12px;
+    border-radius: 3px;
+    border: 1px solid #d9363e;
+    background: #fff1f0;
+    color: #a8071a;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.remittance.green {
+    border: 1px solid #52c41a;
+    background: #f6ffed;
+    color: #237804;
+}
+
+/* ===== Layout ===== */
+.container {
+    display: flex;
+    height: calc(100vh - 34px);
+}
+
+.sidebar {
+    width: 200px;
+    background: white;
+    border-right: 1px solid #c8c8c8;
+    padding-top: 10px;
+}
+
+.menu-btn {
+    background: #f57c00;
+    color: white;
+    margin: 8px 10px;
+    padding: 10px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.menu-btn:hover {
+    background: #e65100;
+}
+
+.main {
+    flex: 1;
+    background: #f5f5f5;
+    padding: 20px;
+    position: relative;
+}
+
+/* ===== Lock Overlay ===== */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.9);
+    display: none;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal {
+    background: white;
+    width: 420px;
+    padding: 20px;
+    border: 2px solid red;
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ===== Top Bar ===== -->
+<div class="topbar">
+    <div class="status-left">
+        POS Version: 2.52.0.1 |
+        SHOP: BRK2 |
+        User: junuatpos03 |
+        Cut-Off: 15:00
+    </div>
+
+    <div id="remittanceBox" class="remittance">
+        <span id="remittanceContent">
+            🔴 Overdue <strong>3d</strong> |
+            <strong>12,450 THB</strong> |
+            Lock in <strong id="timer">00:10</strong>
+        </span>
+    </div>
+</div>
+
+<div class="container">
+    <div class="sidebar">
+        <div class="menu-btn">1. บันทึกรายการส่งสินค้า</div>
+        <div class="menu-btn">2. ดรอป ออฟ</div>
+        <div class="menu-btn">3. สรุปข้อมูลประจำวัน</div>
+        <div class="menu-btn">4. ข้อมูล</div>
+        <div class="menu-btn">5. ชำระสินค้าและบริการ</div>
+    </div>
+
+    <div class="main">
+        <h2>Parcel Send / Operation Area</h2>
+        <p>Main working panel...</p>
+        <div id="overlay" class="overlay"></div>
+    </div>
+</div>
+
+<!-- ===== Lock Modal ===== -->
+<div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+        <h3 style="color:red;">ACCOUNT LOCKED</h3>
+        <p>Overdue 3 days</p>
+        <p>Outstanding: 12,450 THB</p>
+        <p>Please remit to Finance immediately.</p>
+        <p>After payment, contact IT Support.</p>
+        <button onclick="simulateITUnlock()">Simulate IT Restore</button>
+    </div>
+</div>
+
+<script>
+
+let remaining = 10;
+let locked = false;
+
+function updateTimer() {
+
+    if (locked) return;
+
+    document.getElementById("timer").textContent =
+        "00:" + String(remaining).padStart(2, "0");
+
+    if (remaining <= 0) {
+        triggerLock();
+        return;
+    }
+
+    remaining--;
+}
+
+function triggerLock() {
+
+    locked = true;
+
+    document.getElementById("overlay").style.display = "block";
+    document.getElementById("modalOverlay").style.display = "flex";
+
+    document.getElementById("remittanceContent").innerHTML =
+        "⛔ LOCKED | <strong>3d</strong> | <strong>12,450 THB</strong>";
+}
+
+function simulateITUnlock() {
+
+    locked = false;
+
+    document.getElementById("overlay").style.display = "none";
+    document.getElementById("modalOverlay").style.display = "none";
+
+    const box = document.getElementById("remittanceBox");
+    box.classList.add("green");
+
+    document.getElementById("remittanceContent").innerHTML =
+        "🟢 Normal | Paid 12,450 THB";
+}
+
+setInterval(updateTimer, 1000);
+
+</script>
+
+</body>
+</html>
