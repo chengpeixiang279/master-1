@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>KEX POS - Final Compact Version</title>
+<title>KEX POS Full Flow</title>
 
 <style>
 body {
@@ -11,7 +11,7 @@ body {
     background: #dcdcdc;
 }
 
-/* ===== Top Bar ===== */
+/* ===== POS Top Bar ===== */
 .topbar {
     height: 34px;
     background: #efefef;
@@ -23,11 +23,8 @@ body {
     border-bottom: 1px solid #c8c8c8;
 }
 
-.status-left {
-    color: #333;
-}
+.status-left { color: #333; }
 
-/* ===== Compact Remittance ===== */
 .remittance {
     padding: 3px 10px;
     font-size: 12px;
@@ -45,18 +42,8 @@ body {
     color: #237804;
 }
 
-/* ===== Layout ===== */
-.container {
-    display: flex;
-    height: calc(100vh - 34px);
-}
-
-.sidebar {
-    width: 200px;
-    background: white;
-    border-right: 1px solid #c8c8c8;
-    padding-top: 10px;
-}
+.container { display: flex; height: calc(100vh - 34px); }
+.sidebar { width: 200px; background: white; border-right: 1px solid #c8c8c8; padding-top: 10px; }
 
 .menu-btn {
     background: #f57c00;
@@ -67,34 +54,18 @@ body {
     cursor: pointer;
 }
 
-.menu-btn:hover {
-    background: #e65100;
-}
+.main { flex: 1; background: #f5f5f5; padding: 20px; position: relative; }
 
-.main {
-    flex: 1;
-    background: #f5f5f5;
-    padding: 20px;
-    position: relative;
-}
-
-/* ===== Lock Overlay ===== */
 .overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(255,255,255,0.9);
     display: none;
 }
 
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.6);
     display: none;
     justify-content: center;
@@ -108,12 +79,69 @@ body {
     border: 2px solid red;
     text-align: center;
 }
+
+/* ===== Login Page ===== */
+.wrapper {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    background-color: #ffffff;
+}
+
+.login-container { width: 420px; }
+
+.logo {
+    border: 4px solid #f97316;
+    color: #f97316;
+    padding: 8px 0;
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 30px;
+    letter-spacing: 4px;
+}
+
+.field { display: flex; flex-direction: column; margin-bottom: 16px; }
+
+.input {
+    padding: 6px;
+    border: none;
+    border-bottom: 1px solid #999;
+    outline: none;
+}
+
+.button {
+    width: 100%;
+    padding: 10px 0;
+    background-color: #f97316;
+    color: white;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
 </style>
 </head>
 
 <body>
 
-<!-- ===== Top Bar ===== -->
+<div id="app"></div>
+
+<script>
+
+let remaining = 10;
+let locked = false;
+let backendStatus = "OVERDUE"; // OVERDUE / NORMAL
+
+/* ===================== */
+/* ===== POS PAGE ===== */
+/* ===================== */
+
+function renderPOS() {
+
+document.getElementById("app").innerHTML = `
 <div class="topbar">
     <div class="status-left">
         POS Version: 2.52.0.1 |
@@ -147,7 +175,6 @@ body {
     </div>
 </div>
 
-<!-- ===== Lock Modal ===== -->
 <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
         <h3 style="color:red;">ACCOUNT LOCKED</h3>
@@ -158,53 +185,96 @@ body {
         <button onclick="simulateITUnlock()">Simulate IT Restore</button>
     </div>
 </div>
+`;
 
-<script>
+if (backendStatus === "OVERDUE") startCountdown();
+if (backendStatus === "NORMAL") setGreenStatus();
+}
 
-let remaining = 10;
-let locked = false;
+function startCountdown() {
 
-function updateTimer() {
+const interval = setInterval(() => {
 
-    if (locked) return;
+if (locked) { clearInterval(interval); return; }
 
-    document.getElementById("timer").textContent =
-        "00:" + String(remaining).padStart(2, "0");
+document.getElementById("timer").textContent =
+"00:" + String(remaining).padStart(2, "0");
 
-    if (remaining <= 0) {
-        triggerLock();
-        return;
-    }
+if (remaining <= 0) {
+clearInterval(interval);
+triggerLock();
+return;
+}
 
-    remaining--;
+remaining--;
+
+}, 1000);
 }
 
 function triggerLock() {
-
-    locked = true;
-
-    document.getElementById("overlay").style.display = "block";
-    document.getElementById("modalOverlay").style.display = "flex";
-
-    document.getElementById("remittanceContent").innerHTML =
-        "⛔ LOCKED | <strong>3d</strong> | <strong>12,450 THB</strong>";
+locked = true;
+document.getElementById("overlay").style.display = "block";
+document.getElementById("modalOverlay").style.display = "flex";
+document.getElementById("remittanceContent").innerHTML =
+"⛔ LOCKED | <strong>3d</strong> | <strong>12,450 THB</strong>";
 }
 
 function simulateITUnlock() {
 
-    locked = false;
+backendStatus = "NORMAL";
 
-    document.getElementById("overlay").style.display = "none";
-    document.getElementById("modalOverlay").style.display = "none";
-
-    const box = document.getElementById("remittanceBox");
-    box.classList.add("green");
-
-    document.getElementById("remittanceContent").innerHTML =
-        "🟢 Normal | Paid 12,450 THB";
+document.getElementById("modalOverlay").innerHTML = `
+<div class="modal" style="border:2px solid #fa8c16;">
+    <h3 style="color:#fa8c16;">Session Updated</h3>
+    <p>Remittance restored by IT.</p>
+    <button onclick="renderLogin()">Logout</button>
+</div>
+`;
 }
 
-setInterval(updateTimer, 1000);
+/* ===================== */
+/* ===== LOGIN PAGE ==== */
+/* ===================== */
+
+function renderLogin() {
+
+document.getElementById("app").innerHTML = `
+<div class="wrapper">
+<div class="login-container">
+<div class="logo">KEX</div>
+
+<div class="field">
+<label>User:</label>
+<input class="input" type="text" value="junuatpos03">
+</div>
+
+<div class="field">
+<label>Password:</label>
+<input class="input" type="password">
+</div>
+
+<button class="button" onclick="login()">Login</button>
+</div>
+</div>
+`;
+}
+
+function login() {
+renderPOS();
+}
+
+/* ===== 变绿 ===== */
+function setGreenStatus() {
+
+const box = document.getElementById("remittanceBox");
+box.classList.add("green");
+
+document.getElementById("remittanceContent").innerHTML =
+"🟢 Normal | Paid 12,450 THB";
+}
+
+/* 初始化 */
+renderPOS();
 
 </script>
 
